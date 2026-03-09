@@ -1,0 +1,26 @@
+# Maxfiy ma'lumotlar — hech qachon commit qilinmasin!
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Generated audio files
+temp/
+output/
+*.mp3
+*.wav
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
