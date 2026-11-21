@@ -7,6 +7,7 @@ import threading
 import hashlib
 import secrets
 from pathlib import Path
+
 from collections import defaultdict
 from functools import wraps
 from dotenv import load_dotenv
@@ -45,7 +46,7 @@ jobs = {}
 rate_store = defaultdict(list)  # ip -> [timestamps]
 
 # ── Gemini Model ──────────────────────────────────────────
-GEMINI_MODEL = "models/gemini-flash-latest"  # High-limit, fast, cost-efficient
+GEMINI_MODEL = "gemini-3.5-flash-lite"  # Tezkor, arzon, barqaror model
 
 SYSTEM_PROMPT = """Sen professional podkast ssenaristisan. Senga berilgan PDF hujjatdagi ma'lumotlarni chuqur tahlil qil. Ushbu ma'lumotlar asosida 2 kishi o'rtasidagi qiziqarli va jonli suhbat ssenariysini yarat.
 
@@ -102,44 +103,94 @@ def update_job(job_id, **kwargs):
         jobs[job_id].update(kwargs)
 
 
+
 def generate_podcast_task(job_id, pdf_path):
     try:
-        import google.generativeai as genai
+        # from google import genai
+        from google import genai
+        from google.genai import types
 
         if not GEMINI_API_KEY:
-            raise Exception(".env faylida GEMINI_API_KEY topilmadi. Iltimos sozlang.")
+            raise Exception(".env faylida GEMINI_API_KEY topilmadi.")
 
-        genai.configure(api_key=GEMINI_API_KEY)
+        # Gemini yangi SDK
+        client = genai.Client(
+            api_key=GEMINI_API_KEY,
+            http_options=types.HttpOptions(timeout=120_000)
+        )
 
         # Step 1: Upload PDF
-        update_job(job_id, status='uploading', progress=5, message='PDF Gemini-ga yuklanmoqda...')
+        update_job(
+            job_id,
+            status='uploading',
+            progress=5,
+            message='PDF Gemini-ga yuklanmoqda...'
+        )
         logger.info(f"[{job_id}] Uploading PDF...")
-        uploaded_file = genai.upload_file(path=str(pdf_path), mime_type="application/pdf")
+
+        uploaded_file = client.files.upload(
+            file=str(pdf_path)
+        )
 
         max_wait, waited = 120, 0
+
         while uploaded_file.state.name == "PROCESSING" and waited < max_wait:
-            time.sleep(2); waited += 2
-            uploaded_file = genai.get_file(uploaded_file.name)
+            time.sleep(2)
+            waited += 2
+            uploaded_file = client.files.get(name=uploaded_file.name)
 
         if uploaded_file.state.name != "ACTIVE":
-            raise Exception(f"Fayl qayta ishlashda xato: {uploaded_file.state.name}")
+            raise Exception(
+                f"Fayl qayta ishlashda xato: {uploaded_file.state.name}"
+            )
 
-        update_job(job_id, progress=15, message='PDF yuklandi. Ssenariy yaratilmoqda...')
+        update_job(
+            job_id,
+            progress=15,
+            message='PDF yuklandi. Ssenariy yaratilmoqda...'
+        )
 
         # Step 2: Generate script
-        update_job(job_id, status='generating', progress=22, message='DocuCast AI ssenariyni yozmoqda...')
+        update_job(
+            job_id,
+            status='generating',
+            progress=22,
+            message='DocuCast AI ssenariyni yozmoqda...'
+        )
+
         logger.info(f"[{job_id}] Generating script with {GEMINI_MODEL}...")
 
-        model = genai.GenerativeModel(
-            model_name=GEMINI_MODEL,
-            system_instruction=SYSTEM_PROMPT
-        )
-        response = model.generate_content([
-            uploaded_file,
-            "Ushbu PDF hujjatni chuqur o'qib, yuqoridagi talablarga asosan JSON formatida podkast ssenariysi yarat. Faqat sof JSON massivi qaytargin, boshqa hech narsa yo'q."
-        ])
+        for attempt in range(1, 3):
+            try:
+                logger.info(f"[{job_id}] Gemini so'rovi: urinish {attempt}/2")
 
-        raw_text = response.text.strip()
+                response = client.models.generate_content(
+                    model=GEMINI_MODEL,
+                    contents=[
+                        uploaded_file,
+                        "Ushbu PDF hujjatni chuqur o'qib, yuqoridagi talablarga "
+                        "asosan JSON formatida podkast ssenariysi yarat. "
+                        "Faqat sof JSON massivi qaytargin, boshqa hech narsa yo'q."
+                    ],
+                    config=types.GenerateContentConfig(
+                        system_instruction=SYSTEM_PROMPT
+                    )
+                )
+
+                logger.info(f"[{job_id}] Gemini javobi olindi!")
+                break
+
+            except Exception as e:
+                if attempt == 2:
+                    raise
+
+                logger.warning(f"[{job_id}] Gemini xatosi: {e}. Qayta urinilmoqda...")
+                time.sleep(5)
+
+        raw_text = (response.text or "").strip()
+        # raw_text = (response.text or "").strip()
+
+        # Shu yerdan keyingi eski kodingizni o'zgarishsiz qoldiring.
         # Strip markdown fences if present
         if raw_text.startswith("```"):
             lines = raw_text.split('\n')
