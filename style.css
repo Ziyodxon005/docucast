@@ -281,6 +281,324 @@ body {
   max-width: 860px;
   margin: 0 auto;
   width: 100%;
+  transition: max-width 0.3s var(--ease);
+}
+
+.main.wide-mode {
+  max-width: 1240px;
+}
+
+/* ── Split Layout (PDF left + Progress/Player right) ─────── */
+.split-layout {
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.result-right {
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 560px;
+}
+
+.pdf-panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-lt);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pdf-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-1);
+}
+
+.pdf-icon {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.pdf-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pdf-mode-tabs {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-lt);
+  gap: 2px;
+}
+
+.pdf-tab-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+
+.pdf-tab-btn:hover {
+  color: var(--text-1);
+}
+
+.pdf-tab-btn.active {
+  background: rgba(124, 58, 237, 0.25);
+  color: var(--purple-lt);
+}
+
+.pdf-paper-wrap {
+  flex: 1;
+  max-height: 540px;
+  overflow-y: auto;
+  padding: 18px;
+  background: #e2e8f0;
+}
+
+.pdf-paper-wrap::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pdf-paper-wrap::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.45);
+  border-radius: 6px;
+}
+
+.pdf-paper {
+  background: #ffffff;
+  color: #1e293b;
+  border-radius: 10px;
+  padding: 22px;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.16);
+  border-top: 5px solid #7c3aed;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.paper-header {
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 4px;
+}
+
+.paper-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1e1b4b;
+}
+
+.paper-meta {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5b21b6;
+  margin-top: 4px;
+}
+
+.paper-turn {
+  border-radius: 10px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #7c3aed;
+  background: #faf5ff;
+  transition: all 0.25s var(--ease);
+}
+
+.paper-turn.expert {
+  background: #ecfeff;
+  border-color: #cffafe;
+  border-left-color: #0891b2;
+}
+
+.paper-turn.spoken {
+  opacity: 0.72;
+}
+
+.paper-turn.speaking {
+  opacity: 1;
+  transform: scale(1.01);
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.22), 0 8px 22px rgba(124, 58, 237, 0.16);
+}
+
+.paper-turn.expert.speaking {
+  border-color: #0891b2;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.22), 0 8px 22px rgba(6, 182, 212, 0.16);
+}
+
+.paper-turn-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.paper-speaker {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #6d28d9;
+}
+
+.paper-turn.expert .paper-speaker {
+  color: #0e7490;
+}
+
+.paper-turn-state {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6d28d9;
+}
+
+.paper-turn.expert .paper-turn-state {
+  color: #0e7490;
+}
+
+.paper-turn.spoken .paper-turn-state {
+  color: #059669;
+}
+
+.paper-text {
+  font-size: 13.5px;
+  line-height: 1.58;
+  color: #1e293b;
+}
+
+.pdf-badge {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 100px;
+  color: var(--purple-lt);
+  background: rgba(124, 58, 237, 0.14);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+.pdf-badge.ready {
+  color: var(--green-lt);
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.pdf-mini-btn {
+  padding: 5px 11px;
+  border-radius: 8px;
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  background: rgba(6, 182, 212, 0.12);
+  color: var(--cyan-lt);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+
+.pdf-mini-btn:hover {
+  background: rgba(6, 182, 212, 0.22);
+  transform: translateY(-1px);
+}
+
+.pdf-panel-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 500px;
+}
+
+.pdf-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 36px 28px;
+  gap: 14px;
+}
+
+.pdf-placeholder-spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid rgba(124, 58, 237, 0.2);
+  border-top-color: var(--cyan);
+  animation: spin 1s linear infinite;
+}
+
+.pdf-placeholder-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.pdf-placeholder-sub {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.6;
+  max-width: 340px;
+}
+
+.pdf-iframe {
+  width: 100%;
+  flex: 1;
+  min-height: 520px;
+  border: none;
+  background: #0f172a;
+}
+
+.btn-download-pdf {
+  padding: 15px 18px;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  background: rgba(6, 182, 212, 0.12);
+  color: var(--cyan-lt);
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s var(--ease);
+}
+
+.btn-download-pdf:hover {
+  background: rgba(6, 182, 212, 0.22);
+  border-color: var(--cyan);
+  color: white;
+  transform: translateY(-2px);
 }
 
 /* ── View System ─────────────────────────────────────────── */
@@ -386,6 +704,105 @@ body {
   padding: 36px;
   box-shadow: var(--shadow-card);
   backdrop-filter: blur(20px);
+}
+
+/* Language Selector */
+.lang-section {
+  margin-bottom: 22px;
+}
+
+.lang-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.lang-label,
+.upload-step-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+  letter-spacing: 0.2px;
+}
+
+.upload-step-label {
+  margin-bottom: 10px;
+}
+
+.lang-selected-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cyan-lt);
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.28);
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+
+.lang-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-lt);
+  background: var(--bg-input);
+  color: var(--text-2);
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s var(--ease);
+}
+
+.lang-btn:hover {
+  border-color: rgba(124, 58, 237, 0.45);
+  background: rgba(124, 58, 237, 0.08);
+  color: var(--text-1);
+  transform: translateY(-1px);
+}
+
+.lang-btn.active {
+  border-color: var(--purple-lt);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.18), rgba(6, 182, 212, 0.1));
+  color: var(--text-1);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+}
+
+.lang-flag {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.lang-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lang-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: inherit;
+  line-height: 1.2;
+}
+
+.lang-native {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
+.lang-btn.active .lang-native {
+  color: var(--cyan-lt);
 }
 
 /* Drop Zone */
@@ -1473,6 +1890,21 @@ body {
 }
 
 /* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .split-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pdf-panel {
+    min-height: 440px;
+  }
+
+  .pdf-panel-body,
+  .pdf-iframe {
+    min-height: 400px;
+  }
+}
+
 @media (max-width: 640px) {
   .header {
     padding: 14px 18px;
@@ -1495,6 +1927,10 @@ body {
   .progress-card,
   .player-card {
     padding: 22px;
+  }
+
+  .lang-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .speakers-row {

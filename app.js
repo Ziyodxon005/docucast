@@ -7,16 +7,37 @@
 
 // ── State ────────────────────────────────────────────────
 let selectedFile = null;
+let selectedLanguage = 'uz';
 let currentJobId = null;
 let currentToken = null;
 let sseSource = null;
+let scriptPdfLoaded = false;
+let currentScript = [];
+let processViewMode = 'live';
+let resultViewMode = 'pdf';
 let vizBars = [];
 let isSeeking = false;
+
+const LANGUAGE_LABELS = {
+  uz: "O'zbekcha",
+  en: 'English',
+  ru: 'Русский',
+  de: 'Deutsch',
+};
+
+const LANGUAGE_GENITIVE = {
+  uz: "o'zbek tilidagi",
+  en: 'ingliz tilidagi',
+  ru: 'rus tilidagi',
+  de: 'nemis tilidagi',
+};
 
 // ── DOM helpers ──────────────────────────────────────────
 const $ = id => document.getElementById(id);
 
 // Upload view
+const langGrid = $('langGrid');
+const selectedLangLabel = $('selectedLangLabel');
 const dropZone = $('dropZone');
 const fileInput = $('fileInput');
 const dropContent = $('dropContent');
@@ -31,6 +52,14 @@ const ttsLabel = $('ttsLabel');
 const progressFill = $('progressFill');
 const progressPct = $('progressPct');
 const logBox = $('logBox');
+const processPdfPlaceholder = $('processPdfPlaceholder');
+const processPlaceholderTitle = $('processPlaceholderTitle');
+const processPlaceholderSub = $('processPlaceholderSub');
+const processLivePaper = $('processLivePaper');
+const processPdfFrame = $('processPdfFrame');
+const processModeTabs = $('processModeTabs');
+const pdfStatusBadge = $('pdfStatusBadge');
+const btnProcessPdfDownload = $('btnProcessPdfDownload');
 
 // Result view
 const audioEl = $('audioElement');
@@ -46,6 +75,12 @@ const seekFill = $('seekFill');
 const seekThumb = $('seekThumb');
 const volumeSlider = $('volumeSlider');
 const btnDownload = $('btnDownload');
+const btnDownloadPdf = $('btnDownloadPdf');
+const btnResultPdfIcon = $('btnResultPdfIcon');
+const resultPdfFrame = $('resultPdfFrame');
+const resultLivePaper = $('resultLivePaper');
+const resultModeTabs = $('resultModeTabs');
+const resultPdfBadge = $('resultPdfBadge');
 const btnNew = $('btnNew');
 
 
@@ -57,6 +92,8 @@ function showView(name) {
     const el = $(id);
     if (el) el.classList.toggle('active', id === 'view' + name.charAt(0).toUpperCase() + name.slice(1));
   });
+  const mainEl = document.querySelector('.main');
+  if (mainEl) mainEl.classList.toggle('wide-mode', name === 'process' || name === 'result');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -78,6 +115,35 @@ function toast(msg, type = 'info', ms = 4500) {
     el.style.transform = 'translateX(110%)';
     setTimeout(() => el.remove(), 320);
   }, ms);
+}
+
+
+// ════════════════════════════════════════════════════════
+// LANGUAGE SELECTION
+// ════════════════════════════════════════════════════════
+function setLanguage(lang) {
+  if (!LANGUAGE_LABELS[lang]) lang = 'uz';
+  selectedLanguage = lang;
+  try { localStorage.setItem('docucast_lang', lang); } catch {}
+  if (selectedLangLabel) selectedLangLabel.textContent = LANGUAGE_LABELS[lang];
+  if (langGrid) {
+    langGrid.querySelectorAll('.lang-btn').forEach(btn => {
+      const isSelected = btn.dataset.lang === lang;
+      btn.classList.toggle('active', isSelected);
+      btn.setAttribute('aria-checked', String(isSelected));
+    });
+  }
+}
+
+if (langGrid) {
+  const savedLang = (() => { try { return localStorage.getItem('docucast_lang'); } catch { return null; } })();
+  setLanguage(savedLang || 'uz');
+
+  langGrid.addEventListener('click', e => {
+    const btn = e.target.closest('.lang-btn');
+    if (!btn) return;
+    setLanguage(btn.dataset.lang);
+  });
 }
 
 
@@ -161,7 +227,7 @@ async function checkHealth() {
     if (d.status === 'ok') {
       if (d.api_configured) {
         statusEl.className = 'server-status online';
-        statusTxt.textContent = 'Tayyor';
+        statusTxt.textContent = d.api_keys_count > 1 ? `Tayyor (${d.api_keys_count} kalit)` : 'Tayyor';
       } else {
         statusEl.className = 'server-status warning';
         statusTxt.textContent = 'API kalit kerak';
@@ -170,7 +236,7 @@ async function checkHealth() {
       if (ttsLabel && d.tts) {
         ttsLabel.textContent = d.tts === 'google-cloud'
           ? 'TTS: Google Cloud (Premium)'
-          : 'TTS: gTTS (Bepul)';
+          : 'TTS: Edge Neural (Bepul)';
       }
     }
   } catch {
@@ -202,6 +268,7 @@ btnGenerate.addEventListener('click', async () => {
 
   const fd = new FormData();
   fd.append('pdf', selectedFile);
+  fd.append('language', selectedLanguage);
 
   setBtnLoading(true);
   try {
@@ -226,7 +293,165 @@ btnGenerate.addEventListener('click', async () => {
 // ════════════════════════════════════════════════════════
 // PROCESSING
 // ════════════════════════════════════════════════════════
+async function downloadScriptPdf(jobId) {
+  if (!jobId || !currentToken) return;
+  const url = `/api/download-pdf/${jobId}?token=${encodeURIComponent(currentToken)}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      let errMsg = 'Ssenariy PDF yuklab olishda xato';
+      try {
+        const errData = await res.json();
+        if (errData.error) errMsg = errData.error;
+      } catch {}
+      throw new Error(errMsg);
+    }
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = 'docucast_script.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+    toast('Ssenariy PDF yuklab olindi!', 'success');
+  } catch (err) {
+    toast(err.message || 'PDF yuklab olib bo\'lmadi', 'error');
+  }
+}
+
+function renderScriptPaper(container, script, langCode) {
+  if (!container || !Array.isArray(script) || !script.length) return;
+  const langLabel = LANGUAGE_LABELS[langCode] || "O'zbekcha";
+  container.innerHTML = '';
+
+  const sheet = document.createElement('div');
+  sheet.className = 'pdf-paper';
+
+  const header = document.createElement('div');
+  header.className = 'paper-header';
+  const title = document.createElement('div');
+  title.className = 'paper-title';
+  title.textContent = 'DocuCast — Podkast Ssenariysi';
+  const meta = document.createElement('div');
+  meta.className = 'paper-meta';
+  meta.textContent = `Til: ${langLabel} · ${script.length} ta dialog · Shaxnoza & Mustafo`;
+  header.append(title, meta);
+  sheet.appendChild(header);
+
+  script.forEach((turn, idx) => {
+    const speaker = (turn.speaker || 'Shaxnoza').trim();
+    const text = (turn.text || '').trim();
+    const isHost = speaker.toLowerCase() === 'shaxnoza';
+
+    const card = document.createElement('div');
+    card.className = `paper-turn ${isHost ? 'host' : 'expert'}`;
+    card.dataset.turnIdx = String(idx);
+
+    const top = document.createElement('div');
+    top.className = 'paper-turn-top';
+
+    const spEl = document.createElement('span');
+    spEl.className = 'paper-speaker';
+    spEl.textContent = `#${String(idx + 1).padStart(2, '0')}  ${speaker}`;
+
+    const stateEl = document.createElement('span');
+    stateEl.className = 'paper-turn-state';
+    top.append(spEl, stateEl);
+
+    const body = document.createElement('div');
+    body.className = 'paper-text';
+    body.textContent = text;
+
+    card.append(top, body);
+    sheet.appendChild(card);
+  });
+
+  container.appendChild(sheet);
+}
+
+function updateActiveTurnUI(container, currentTurn) {
+  if (!container) return;
+  const cards = container.querySelectorAll('.paper-turn');
+  let activeCard = null;
+  cards.forEach(card => {
+    const idx = Number(card.dataset.turnIdx);
+    const stateEl = card.querySelector('.paper-turn-state');
+    const isActive = idx === currentTurn;
+    const isDone = currentTurn >= 0 && idx < currentTurn;
+    card.classList.toggle('speaking', isActive);
+    card.classList.toggle('spoken', isDone);
+    if (stateEl) {
+      if (isActive) stateEl.textContent = "🎙️ O'qilmoqda...";
+      else if (isDone) stateEl.textContent = '✓';
+      else stateEl.textContent = '';
+    }
+    if (isActive) activeCard = card;
+  });
+  if (activeCard && processViewMode === 'live') {
+    activeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function applyProcessMode(mode) {
+  processViewMode = mode;
+  if (processModeTabs) {
+    processModeTabs.querySelectorAll('.pdf-tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === mode);
+    });
+  }
+  const hasScript = currentScript.length > 0;
+  if (processLivePaper) processLivePaper.classList.toggle('hidden', !(hasScript && mode === 'live'));
+  if (processPdfFrame) processPdfFrame.classList.toggle('hidden', !(scriptPdfLoaded && mode === 'pdf'));
+}
+
+function applyResultMode(mode) {
+  resultViewMode = mode;
+  if (resultModeTabs) {
+    resultModeTabs.querySelectorAll('.pdf-tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === mode);
+    });
+  }
+  if (resultPdfFrame) resultPdfFrame.classList.toggle('hidden', mode !== 'pdf');
+  if (resultLivePaper) resultLivePaper.classList.toggle('hidden', mode !== 'live');
+}
+
+if (processModeTabs) {
+  processModeTabs.addEventListener('click', e => {
+    const btn = e.target.closest('.pdf-tab-btn');
+    if (btn) applyProcessMode(btn.dataset.mode);
+  });
+}
+if (resultModeTabs) {
+  resultModeTabs.addEventListener('click', e => {
+    const btn = e.target.closest('.pdf-tab-btn');
+    if (btn) applyResultMode(btn.dataset.mode);
+  });
+}
+
+function loadScriptPdfPreview(jobId, turns) {
+  if (!jobId || !currentToken || scriptPdfLoaded) return;
+  scriptPdfLoaded = true;
+  const pdfUrl = `/api/script-pdf/${jobId}?token=${encodeURIComponent(currentToken)}#view=FitH`;
+
+  if (processPdfFrame) processPdfFrame.src = pdfUrl;
+  if (processModeTabs) processModeTabs.classList.remove('hidden');
+  if (processPdfPlaceholder) processPdfPlaceholder.classList.add('hidden');
+  if (btnProcessPdfDownload) {
+    btnProcessPdfDownload.classList.remove('hidden');
+    btnProcessPdfDownload.onclick = () => downloadScriptPdf(jobId);
+  }
+  if (resultPdfBadge) {
+    resultPdfBadge.textContent = turns ? `${turns} ta dialog` : 'Tayyor';
+  }
+  applyProcessMode(processViewMode);
+}
+
 function resetProcessView() {
+  scriptPdfLoaded = false;
+  currentScript = [];
+  processViewMode = 'live';
   progressFill.style.width = '0%';
   progressPct.textContent = '0%';
   logBox.innerHTML = '<div class="log-line">Jarayon boshlanmoqda...</div>';
@@ -234,6 +459,25 @@ function resetProcessView() {
     const el = $(id);
     if (el) el.classList.remove('active', 'done');
   });
+  if (processPlaceholderTitle) {
+    processPlaceholderTitle.textContent = selectedFile
+      ? `${selectedFile.name} o'qilmoqda...`
+      : 'Ssenariy tayyorlanmoqda...';
+  }
+  if (processPlaceholderSub) {
+    processPlaceholderSub.textContent = "AI hujjatni o'qib, ssenariyni yozishi bilan bu yerda jonli ko'rinadi va hozir qaysi qism o'qilayotgani ajratib ko'rsatiladi.";
+  }
+  if (processPdfPlaceholder) processPdfPlaceholder.classList.remove('hidden');
+  if (processLivePaper) { processLivePaper.innerHTML = ''; processLivePaper.classList.add('hidden'); }
+  if (processPdfFrame) { processPdfFrame.src = ''; processPdfFrame.classList.add('hidden'); }
+  if (processModeTabs) processModeTabs.classList.add('hidden');
+  if (resultPdfFrame) resultPdfFrame.src = '';
+  if (resultLivePaper) { resultLivePaper.innerHTML = ''; resultLivePaper.classList.add('hidden'); }
+  if (pdfStatusBadge) {
+    pdfStatusBadge.textContent = 'Yozilmoqda...';
+    pdfStatusBadge.classList.remove('ready');
+  }
+  if (btnProcessPdfDownload) btnProcessPdfDownload.classList.add('hidden');
 }
 
 function updateSteps(pct) {
@@ -278,7 +522,32 @@ function startSSE(jobId) {
       progressFill.style.width = `${pct}%`;
       progressPct.textContent = `${pct}%`;
       updateSteps(pct);
-      if (job.message) addLog(job.message);
+      if (job.message) {
+        addLog(job.message);
+        if (!currentScript.length && processPlaceholderSub) {
+          processPlaceholderSub.textContent = job.message;
+        }
+      }
+      if (Array.isArray(job.script) && job.script.length && !currentScript.length) {
+        currentScript = job.script;
+        renderScriptPaper(processLivePaper, currentScript, job.language || selectedLanguage);
+        renderScriptPaper(resultLivePaper, currentScript, job.language || selectedLanguage);
+        if (processPdfPlaceholder) processPdfPlaceholder.classList.add('hidden');
+        applyProcessMode(processViewMode);
+      }
+      if (job.script_ready) loadScriptPdfPreview(jobId, job.script_turns);
+      if (currentScript.length && typeof job.current_turn === 'number') {
+        updateActiveTurnUI(processLivePaper, job.current_turn);
+        if (pdfStatusBadge) {
+          const total = currentScript.length;
+          if (job.current_turn >= total) {
+            pdfStatusBadge.textContent = `Tayyor (${total})`;
+            pdfStatusBadge.classList.add('ready');
+          } else if (job.current_turn >= 0) {
+            pdfStatusBadge.textContent = `O'qilmoqda: ${job.current_turn + 1}/${total}`;
+          }
+        }
+      }
 
       if (job.status === 'done') {
         sseSource.close(); sseSource = null;
@@ -303,8 +572,25 @@ function showResultView(jobId) {
   showView('result');
   buildVizBars();
 
+  const resultSub = $('resultSub');
+  if (resultSub) {
+    const langText = LANGUAGE_GENITIVE[selectedLanguage] || '';
+    resultSub.textContent = `AI yaratgan ${langText} audio podkastingizni eshiting`;
+  }
+
   audioEl.src = `/api/stream/${jobId}?token=${encodeURIComponent(currentToken)}`;
   audioEl.load();
+
+  if (resultPdfFrame) {
+    resultPdfFrame.src = `/api/script-pdf/${jobId}?token=${encodeURIComponent(currentToken)}#view=FitH`;
+  }
+  if (currentScript.length && resultLivePaper) {
+    if (!resultLivePaper.children.length) {
+      renderScriptPaper(resultLivePaper, currentScript, selectedLanguage);
+    }
+    updateActiveTurnUI(resultLivePaper, currentScript.length);
+  }
+  applyResultMode('pdf');
 
   btnDownload.onclick = () => {
     const a = document.createElement('a');
@@ -315,6 +601,9 @@ function showResultView(jobId) {
     a.remove();
     toast('Yuklab olish boshlandi!', 'success');
   };
+
+  if (btnDownloadPdf) btnDownloadPdf.onclick = () => downloadScriptPdf(jobId);
+  if (btnResultPdfIcon) btnResultPdfIcon.onclick = () => downloadScriptPdf(jobId);
 
   toast('🎉 Podkastingiz tayyor!', 'success', 5000);
 }
@@ -392,7 +681,11 @@ volumeSlider.addEventListener('input', () => { audioEl.volume = volumeSlider.val
 btnNew.addEventListener('click', () => {
   if (sseSource) { sseSource.close(); sseSource = null; }
   audioEl.pause(); audioEl.src = '';
+  if (processPdfFrame) processPdfFrame.src = '';
+  if (resultPdfFrame) resultPdfFrame.src = '';
   selectedFile = currentJobId = currentToken = null;
+  scriptPdfLoaded = false;
+  currentScript = [];
   clearFile();
   setBtnLoading(false);
   showView('upload');

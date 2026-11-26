@@ -4,5 +4,6 @@ google-genai>=1.0.0
 google-cloud-texttospeech>=2.16.0
 pydub>=0.25.1
 edge-tts>=7.0.0
+pillow>=10.0.0
 python-dotenv>=1.0.0
 gunicorn>=21.0.0

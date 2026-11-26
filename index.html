@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DocuCast — PDF'dan Podkast Yarating</title>
   <meta name="description" content="DocuCast — AI yordamida PDF hujjatlarni 2 kishilik o'zbek podkastiga aylantiring" />
-  <link rel="stylesheet" href="style.css?v=2" />
+  <link rel="stylesheet" href="style.css?v=5" />
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -61,7 +61,7 @@
         <div class="hero">
           <div class="hero-pill">
             <span class="pill-dot"></span>
-            DocuCast AI · Google TTS · O'zbek tili
+            DocuCast AI · Neural TTS · 4 tilda podkast
           </div>
           <h1 class="hero-title">
             PDF'ingizni<br />
@@ -69,7 +69,7 @@
             Aylantiring
           </h1>
           <p class="hero-sub">
-            Hujjatingizni yuklang — AI uni o'qib, Ali va Vali o'rtasidagi
+            Tilni tanlang va hujjatingizni yuklang — AI uni o'qib, Shaxnoza va Mustafo o'rtasidagi
             qiziqarli radio-suhbatga aylantiradi va tayyor MP3 fayl taqdim etadi.
           </p>
         </div>
@@ -77,7 +77,46 @@
         <!-- Upload Card -->
         <div class="upload-card">
 
+          <!-- Language Selector (first step before creating podcast) -->
+          <div class="lang-section">
+            <div class="lang-header">
+              <span class="lang-label">1. Podkast tilini tanlang</span>
+              <span class="lang-selected-badge" id="selectedLangLabel">O'zbekcha</span>
+            </div>
+            <div class="lang-grid" id="langGrid" role="radiogroup" aria-label="Podkast tili">
+              <button type="button" class="lang-btn active" data-lang="uz" role="radio" aria-checked="true">
+                <span class="lang-flag">🇺🇿</span>
+                <span class="lang-info">
+                  <span class="lang-name">O'zbek</span>
+                  <span class="lang-native">O'zbekcha</span>
+                </span>
+              </button>
+              <button type="button" class="lang-btn" data-lang="en" role="radio" aria-checked="false">
+                <span class="lang-flag">🇬🇧</span>
+                <span class="lang-info">
+                  <span class="lang-name">Ingliz</span>
+                  <span class="lang-native">English</span>
+                </span>
+              </button>
+              <button type="button" class="lang-btn" data-lang="ru" role="radio" aria-checked="false">
+                <span class="lang-flag">🇷🇺</span>
+                <span class="lang-info">
+                  <span class="lang-name">Rus</span>
+                  <span class="lang-native">Русский</span>
+                </span>
+              </button>
+              <button type="button" class="lang-btn" data-lang="de" role="radio" aria-checked="false">
+                <span class="lang-flag">🇩🇪</span>
+                <span class="lang-info">
+                  <span class="lang-name">Nemis</span>
+                  <span class="lang-native">Deutsch</span>
+                </span>
+              </button>
+            </div>
+          </div>
+
           <!-- Drop Zone -->
+          <div class="upload-step-label">2. PDF hujjatni yuklang</div>
           <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="PDF fayl yuklash">
             <input type="file" class="file-input" id="fileInput" accept=".pdf" aria-label="PDF tanlash" />
 
@@ -197,8 +236,8 @@
               </svg>
             </div>
             <div class="feature-body">
-              <div class="feature-title">O'zbek Tili</div>
-              <div class="feature-desc">Sof o'zbek tilida, jonli nutq uslubida professional audio</div>
+              <div class="feature-title">4 Tilda Audio</div>
+              <div class="feature-desc">O'zbek, Ingliz, Rus va Nemis tillarida jonli va tabiiy ovoz</div>
             </div>
           </div>
         </div>
@@ -228,70 +267,104 @@
           <p class="process-sub">Bir necha daqiqa sabr qiling. Sahifani yopmang.</p>
         </div>
 
-        <div class="progress-card">
-          <!-- Progress bar -->
-          <div class="progress-wrap">
-            <div class="progress-track">
-              <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        <div class="split-layout">
+          <!-- Left: Live Script & PDF Preview -->
+          <div class="pdf-panel">
+            <div class="pdf-panel-header">
+              <div class="pdf-panel-title">
+                <span class="pdf-icon">📄</span>
+                <span>Podkast Ssenariysi</span>
+              </div>
+              <div class="pdf-panel-actions">
+                <div class="pdf-mode-tabs hidden" id="processModeTabs">
+                  <button type="button" class="pdf-tab-btn active" data-mode="live">Jonli o'qish</button>
+                  <button type="button" class="pdf-tab-btn" data-mode="pdf">PDF sahifa</button>
+                </div>
+                <span class="pdf-badge" id="pdfStatusBadge">Yozilmoqda...</span>
+                <button type="button" class="pdf-mini-btn hidden" id="btnProcessPdfDownload" title="Ssenariy PDF yuklab olish">
+                  ↓ PDF
+                </button>
+              </div>
             </div>
-            <span class="progress-pct" id="progressPct">0%</span>
-          </div>
-
-          <!-- Steps -->
-          <div class="steps" id="stepsContainer">
-            <div class="step" id="step1">
-              <div class="step-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
+            <div class="pdf-panel-body">
+              <div class="pdf-placeholder" id="processPdfPlaceholder">
+                <div class="pdf-placeholder-spinner"></div>
+                <div class="pdf-placeholder-title" id="processPlaceholderTitle">Ssenariy tayyorlanmoqda...</div>
+                <div class="pdf-placeholder-sub" id="processPlaceholderSub">
+                  AI hujjatni o'qib, ssenariyni yozishi bilan bu yerda jonli ko'rinadi va hozir qaysi qism o'qilayotgani ajratib ko'rsatiladi.
+                </div>
               </div>
-              <div class="step-body">
-                <div class="step-title">PDF yuklash va tahlil</div>
-                <div class="step-desc">DocuCast AI-ga yuklanmoqda</div>
-              </div>
-              <div class="step-status"></div>
-            </div>
-            <div class="step" id="step2">
-              <div class="step-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                </svg>
-              </div>
-              <div class="step-body">
-                <div class="step-title">Ssenariy yaratish</div>
-                <div class="step-desc">DocuCast AI dialog yozmoqda</div>
-              </div>
-              <div class="step-status"></div>
-            </div>
-            <div class="step" id="step3">
-              <div class="step-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                </svg>
-              </div>
-              <div class="step-body">
-                <div class="step-title">Ovozlashtirish & Birlashtirish</div>
-                <div class="step-desc">TTS audio yaratmoqda</div>
-              </div>
-              <div class="step-status"></div>
+              <div class="pdf-paper-wrap hidden" id="processLivePaper"></div>
+              <iframe class="pdf-iframe hidden" id="processPdfFrame" title="Podkast ssenariysi PDF"></iframe>
             </div>
           </div>
 
-          <!-- Log -->
-          <div class="log-panel">
-            <div class="log-header">
-              <span class="log-dot-blink"></span>
-              Jonli holat
+          <!-- Right: Progress Card -->
+          <div class="progress-card">
+            <!-- Progress bar -->
+            <div class="progress-wrap">
+              <div class="progress-track">
+                <div class="progress-fill" id="progressFill" style="width:0%"></div>
+              </div>
+              <span class="progress-pct" id="progressPct">0%</span>
             </div>
-            <div class="log-body" id="logBox">
-              <div class="log-line">Jarayon boshlanmoqda...</div>
+
+            <!-- Steps -->
+            <div class="steps" id="stepsContainer">
+              <div class="step" id="step1">
+                <div class="step-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                </div>
+                <div class="step-body">
+                  <div class="step-title">PDF yuklash va tahlil</div>
+                  <div class="step-desc">DocuCast AI-ga yuklanmoqda</div>
+                </div>
+                <div class="step-status"></div>
+              </div>
+              <div class="step" id="step2">
+                <div class="step-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                </div>
+                <div class="step-body">
+                  <div class="step-title">Ssenariy yaratish</div>
+                  <div class="step-desc">DocuCast AI dialog yozmoqda</div>
+                </div>
+                <div class="step-status"></div>
+              </div>
+              <div class="step" id="step3">
+                <div class="step-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                  </svg>
+                </div>
+                <div class="step-body">
+                  <div class="step-title">Ovozlashtirish & Birlashtirish</div>
+                  <div class="step-desc">TTS audio yaratmoqda</div>
+                </div>
+                <div class="step-status"></div>
+              </div>
+            </div>
+
+            <!-- Log -->
+            <div class="log-panel">
+              <div class="log-header">
+                <span class="log-dot-blink"></span>
+                Jonli holat
+              </div>
+              <div class="log-body" id="logBox">
+                <div class="log-line">Jarayon boshlanmoqda...</div>
+              </div>
             </div>
           </div>
         </div>
@@ -311,107 +384,146 @@
             </svg>
           </div>
           <h2 class="result-title">Podkastingiz tayyor!</h2>
-          <p class="result-sub">AI yaratgan o'zbek tilidagi audio podkastingizni eshiting</p>
+          <p class="result-sub" id="resultSub">AI yaratgan audio podkastingizni eshiting</p>
         </div>
 
-        <!-- Speaker cards -->
-        <div class="speakers-row">
-          <div class="speaker-chip purple-chip">
-            <div class="chip-avatar">👩‍💼</div>
-            <div>
-              <div class="chip-name">Shaxnoza</div>
-              <div class="chip-role">Boshlovchi</div>
+        <div class="split-layout">
+          <!-- Left: Script PDF Reader -->
+          <div class="pdf-panel">
+            <div class="pdf-panel-header">
+              <div class="pdf-panel-title">
+                <span class="pdf-icon">📄</span>
+                <span>Podkast Ssenariysi (PDF)</span>
+              </div>
+              <div class="pdf-panel-actions">
+                <div class="pdf-mode-tabs" id="resultModeTabs">
+                  <button type="button" class="pdf-tab-btn active" data-mode="pdf">PDF sahifa</button>
+                  <button type="button" class="pdf-tab-btn" data-mode="live">Matn</button>
+                </div>
+                <span class="pdf-badge ready" id="resultPdfBadge">Tayyor</span>
+                <button type="button" class="pdf-mini-btn" id="btnResultPdfIcon" title="Ssenariy PDF yuklab olish">
+                  ↓ PDF
+                </button>
+              </div>
+            </div>
+            <div class="pdf-panel-body">
+              <iframe class="pdf-iframe" id="resultPdfFrame" title="Podkast ssenariysi PDF"></iframe>
+              <div class="pdf-paper-wrap hidden" id="resultLivePaper"></div>
             </div>
           </div>
-          <div class="speakers-wave">
-            <div class="sw-bar"></div>
-            <div class="sw-bar"></div>
-            <div class="sw-bar"></div>
-            <div class="sw-bar"></div>
-            <div class="sw-bar"></div>
-          </div>
-          <div class="speaker-chip cyan-chip">
-            <div class="chip-avatar">🎓</div>
-            <div>
-              <div class="chip-name">Mustafo</div>
-              <div class="chip-role">Ekspert</div>
+
+          <!-- Right: Speakers + Player -->
+          <div class="result-right">
+            <!-- Speaker cards -->
+            <div class="speakers-row">
+              <div class="speaker-chip purple-chip">
+                <div class="chip-avatar">👩‍💼</div>
+                <div>
+                  <div class="chip-name">Shaxnoza</div>
+                  <div class="chip-role">Boshlovchi</div>
+                </div>
+              </div>
+              <div class="speakers-wave">
+                <div class="sw-bar"></div>
+                <div class="sw-bar"></div>
+                <div class="sw-bar"></div>
+                <div class="sw-bar"></div>
+                <div class="sw-bar"></div>
+              </div>
+              <div class="speaker-chip cyan-chip">
+                <div class="chip-avatar">🎓</div>
+                <div>
+                  <div class="chip-name">Mustafo</div>
+                  <div class="chip-role">Ekspert</div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Player -->
-        <div class="player-card">
-          <audio id="audioElement" preload="metadata"></audio>
+            <!-- Player -->
+            <div class="player-card">
+              <audio id="audioElement" preload="metadata"></audio>
 
-          <!-- Waveform viz -->
-          <div class="player-viz" id="playerViz"></div>
+              <!-- Waveform viz -->
+              <div class="player-viz" id="playerViz"></div>
 
-          <!-- Time + Seek -->
-          <div class="seek-row">
-            <span class="time-label" id="currentTime">0:00</span>
-            <div class="seek-track" id="seekTrack">
-              <div class="seek-fill" id="seekFill" style="width:0%"></div>
-              <div class="seek-thumb" id="seekThumb" style="left:0%"></div>
+              <!-- Time + Seek -->
+              <div class="seek-row">
+                <span class="time-label" id="currentTime">0:00</span>
+                <div class="seek-track" id="seekTrack">
+                  <div class="seek-fill" id="seekFill" style="width:0%"></div>
+                  <div class="seek-thumb" id="seekThumb" style="left:0%"></div>
+                </div>
+                <span class="time-label" id="totalTime">0:00</span>
+              </div>
+
+              <!-- Playback Controls -->
+              <div class="player-controls">
+                <button class="ctrl-btn" id="btnRewind" title="15s orqaga">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="11 17 2 12 11 7 11 17" />
+                    <polyline points="22 17 13 12 22 7 22 17" />
+                  </svg>
+                </button>
+                <button class="ctrl-btn play-btn" id="btnPlay" title="Ijro / To'xtatish">
+                  <svg id="iconPlay" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                  <svg id="iconPause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" class="hidden">
+                    <rect x="6" y="4" width="4" height="16" />
+                    <rect x="14" y="4" width="4" height="16" />
+                  </svg>
+                </button>
+                <button class="ctrl-btn" id="btnForward" title="15s oldinga">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="13 17 22 12 13 7 13 17" />
+                    <polyline points="2 17 11 12 2 7 2 17" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Volume -->
+              <div class="volume-row">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </svg>
+                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1" />
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="action-row">
+                <button class="btn-download" id="btnDownload">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Yuklab Olish (MP3)
+                </button>
+                <button class="btn-download-pdf" id="btnDownloadPdf">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="12" y1="18" x2="12" y2="12" />
+                    <polyline points="9 15 12 18 15 15" />
+                  </svg>
+                  Ssenariy (PDF)
+                </button>
+                <button class="btn-new" id="btnNew">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Yangi
+                </button>
+              </div>
             </div>
-            <span class="time-label" id="totalTime">0:00</span>
-          </div>
-
-          <!-- Playback Controls -->
-          <div class="player-controls">
-            <button class="ctrl-btn" id="btnRewind" title="15s orqaga">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="11 17 2 12 11 7 11 17" />
-                <polyline points="22 17 13 12 22 7 22 17" />
-              </svg>
-            </button>
-            <button class="ctrl-btn play-btn" id="btnPlay" title="Ijro / To'xtatish">
-              <svg id="iconPlay" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
-              <svg id="iconPause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" class="hidden">
-                <rect x="6" y="4" width="4" height="16" />
-                <rect x="14" y="4" width="4" height="16" />
-              </svg>
-            </button>
-            <button class="ctrl-btn" id="btnForward" title="15s oldinga">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="13 17 22 12 13 7 13 17" />
-                <polyline points="2 17 11 12 2 7 2 17" />
-              </svg>
-            </button>
-          </div>
-
-          <!-- Volume -->
-          <div class="volume-row">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-            </svg>
-            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1" />
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="action-row">
-            <button class="btn-download" id="btnDownload">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              Yuklab Olish (MP3)
-            </button>
-            <button class="btn-new" id="btnNew">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Yangi
-            </button>
           </div>
         </div>
 
@@ -425,7 +537,7 @@
     </footer>
   </div>
 
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=7"></script>
 </body>
 
 </html>
